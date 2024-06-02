@@ -1,5 +1,7 @@
 package com.fabdev.AlbirLeaks.jobs;
 
+import java.time.LocalDate;
+
 public class Job {
     private String jobId;
     private String jobTitle;
@@ -7,12 +9,16 @@ public class Job {
     private String location;
     private String companyName;
 
-    public Job(String jobId, String jobTitle, String jobDescription, String location, String companyName) {
+    private LocalDate createdAt;
+
+
+    public Job(String jobId, String jobTitle, String jobDescription, String location, String companyName, LocalDate createdAt) {
         this.jobId = jobId;
         this.jobTitle = jobTitle;
         this.jobDescription = jobDescription;
         this.location = location;
         this.companyName = companyName;
+        this.createdAt = createdAt;
     }
 
     public String getJobId() {
@@ -53,5 +59,13 @@ public class Job {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
     }
 }
