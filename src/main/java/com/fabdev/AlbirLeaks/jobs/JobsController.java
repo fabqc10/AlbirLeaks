@@ -7,7 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -25,16 +27,19 @@ public class JobsController {
     }
 
     @PostMapping("/jobs")
-    public ResponseJobDTO createNewJob(@RequestBody CreateJobDTO dto){
+    public ResponseEntity<ResponseJobDTO> createNewJob(@RequestBody CreateJobDTO dto){
         ResponseJobDTO job = service.createJob(dto);
-        return job;
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{jobId}")
+                .buildAndExpand(job.jobId())
+                .toUri();
+        return ResponseEntity.created(location).body(job);
     }
 
     @PutMapping("/jobs/{jobId}")
-    public ResponseJobDTO updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto){
-        logger.info("dto from CONTROLLER: {}",dto);
+    public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto){
         ResponseJobDTO updatedJob = service.updateJob(jobId, dto);
-        return updatedJob;
+        return ResponseEntity.ok(updatedJob);
     }
 
     @DeleteMapping("/jobs/{jobId}")
@@ -44,8 +49,5 @@ public class JobsController {
 
     }
 
-
-
-
-
+    
 }
