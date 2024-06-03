@@ -26,6 +26,12 @@ public class JobsController {
         return service.getJobs();
     }
 
+    @GetMapping("/jobs/{jobId}")
+    public ResponseJobDTO getJob(@PathVariable String jobId){
+        ResponseJobDTO jobToFind = service.getJobById(jobId);
+        return jobToFind;
+    }
+
     @PostMapping("/jobs")
     public ResponseEntity<ResponseJobDTO> createNewJob(@RequestBody CreateJobDTO dto){
         ResponseJobDTO job = service.createJob(dto);

@@ -28,6 +28,19 @@ public class JobsService {
         return jobs;
     }
 
+    public ResponseJobDTO getJobById(String jobId) {
+        Predicate<Job> jobPredicate = job -> job.getJobId().equals(jobId);
+        Job jobToFind = jobs.stream().filter(jobPredicate).findFirst().orElseThrow();
+        return new ResponseJobDTO(
+                jobToFind.getJobId(),
+                jobToFind.getJobTitle(),
+                jobToFind.getJobDescription(),
+                jobToFind.getLocation(),
+                jobToFind.getCompanyName(),
+                jobToFind.getCreatedAt()
+        );
+    }
+
     public ResponseJobDTO createJob(CreateJobDTO dto){
         Job newJob = new Job(
                 UUID.randomUUID().toString(),
@@ -48,6 +61,7 @@ public class JobsService {
                 newJob.getCreatedAt()
         );
     }
+
 
     public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto){
         Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
