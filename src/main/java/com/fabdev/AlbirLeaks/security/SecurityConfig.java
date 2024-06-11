@@ -36,21 +36,3 @@ public class SecurityConfig {
         return new SimpleUrlAuthenticationSuccessHandler("/jobs");
     }
 }
-
-// http
-//         .authorizeRequests(authorizeRequests ->
-//         authorizeRequests
-//         .requestMatchers("/", "/login**", "/error**").permitAll()
-//         .requestMatchers("/jobs", "/jobs/**").permitAll()
-//         .requestMatchers(HttpMethod.POST, "/jobs").authenticated()
-//         .requestMatchers(HttpMethod.DELETE, "/jobs/**").authenticated()
-//         .anyRequest().authenticated()
-//         )
-//         .oauth2Login(oauth2Login ->
-//         oauth2Login
-//         .loginPage("/login")
-//         )
-//         .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
-//         .exceptionHandling(exceptionHandling ->
-//         exceptionHandling.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-//         );

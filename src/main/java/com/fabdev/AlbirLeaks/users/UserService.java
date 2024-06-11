@@ -20,11 +20,6 @@ public class UserService {
     public User createUser(String googleId, String email, String username){
         User newUser = new User(UUID.randomUUID().toString(),username,email,"USER",googleId, new ArrayList<>());
         users.add(newUser);
-        System.out.println("NEW USER" + newUser.getGoogleId().toString());
-        System.out.println("NEW USER" + newUser.getEmail().toString());
-        System.out.println("NEW USER" + newUser.getUsername().toString());
-        System.out.println(getUsers().size());
-
         return newUser;
     }
 

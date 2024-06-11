@@ -4,6 +4,8 @@ import com.fabdev.AlbirLeaks.exception.JobNotFoundException;
 import com.fabdev.AlbirLeaks.jobs.DTOs.CreateJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.ResponseJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.UpdateJobDTO;
+import com.fabdev.AlbirLeaks.users.User;
+import com.fabdev.AlbirLeaks.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,7 +19,11 @@ import java.util.function.Predicate;
 @Component
 public class JobsService {
 
+    private UserService userService;
     private Logger logger = LoggerFactory.getLogger(JobsService.class);
+    public JobsService(UserService userService) {
+        this.userService = userService;
+    }
 
     private List<Job> jobs = new ArrayList<>(List.of(
             new Job("J101", "Software Engineer", "Develop software.", "New York", "Tech Corp", LocalDate.now()),
@@ -43,7 +49,8 @@ public class JobsService {
         );
     }
 
-    public ResponseJobDTO createJob(CreateJobDTO dto){
+    public ResponseJobDTO createJob(CreateJobDTO dto, String googleId){
+        User user = userService.findByGoogleId(googleId).orElseThrow(() -> new RuntimeException("User not found"));
         Job newJob = new Job(
                 UUID.randomUUID().toString(),
                 dto.jobTitle(),
