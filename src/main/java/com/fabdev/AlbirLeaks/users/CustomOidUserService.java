@@ -29,6 +29,7 @@ public class CustomOidUserService extends OidcUserService {
                         ()-> userService
                                 .createUser(googleId,email,username));
         // Return the loaded OIDC user
+        System.out.println("CREATED");
         return oidcUser;
 
     }
