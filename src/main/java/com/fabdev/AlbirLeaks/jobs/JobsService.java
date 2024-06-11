@@ -60,7 +60,9 @@ public class JobsService {
                 LocalDate.now()
                 );
 
+        newJob.setOwner(user);
         jobs.add(newJob);
+        user.getJobs().add(newJob);
         return new ResponseJobDTO(
                 newJob.getJobId(),
                 newJob.getJobTitle(),
