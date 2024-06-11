@@ -52,7 +52,6 @@ public class JobsController {
     public ResponseEntity<Void> deleteJob(@PathVariable String jobId){
         service.deleteJob(jobId);
         return ResponseEntity.noContent().build();
-
     }
 
 

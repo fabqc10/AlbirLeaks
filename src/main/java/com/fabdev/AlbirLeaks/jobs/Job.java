@@ -1,5 +1,7 @@
 package com.fabdev.AlbirLeaks.jobs;
 
+import com.fabdev.AlbirLeaks.users.User;
+
 import java.time.LocalDate;
 
 public class Job {
@@ -8,8 +10,8 @@ public class Job {
     private String jobDescription;
     private String location;
     private String companyName;
-
     private LocalDate createdAt;
+    private User owner;
 
 
     public Job(String jobId, String jobTitle, String jobDescription, String location, String companyName, LocalDate createdAt) {
