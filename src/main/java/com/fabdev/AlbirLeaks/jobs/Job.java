@@ -1,6 +1,7 @@
 package com.fabdev.AlbirLeaks.jobs;
 
 import com.fabdev.AlbirLeaks.users.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDate;
 
@@ -11,6 +12,7 @@ public class Job {
     private String location;
     private String companyName;
     private LocalDate createdAt;
+    @JsonBackReference
     private User owner;
 
 

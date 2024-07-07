@@ -6,11 +6,27 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: openid,email,profile
-            redirect-uri: http://localhost:8080/login/oauth2/code/google
+            scope: openid, email, profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Google
             provider: google
-      resource-server:
-        jwt:
-          issuer-uri: https://accounts.google.com
-          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+        provider:
+          google:
+            user-name-attribute: sub
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            issuer-uri: https://accounts.google.com 
 
+  servlet:
+    session:
+      timeout: 3  # Session timeout configuration
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.security.oauth2: TRACE
+    org.springframework.security.oauth2.client: TRACE
+    org.springframework.security.oauth2.core: TRACE
+    org.springframework.security.oauth2.jwt: TRACE

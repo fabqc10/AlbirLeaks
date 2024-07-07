@@ -3,9 +3,11 @@ package com.fabdev.AlbirLeaks.jobs;
 import com.fabdev.AlbirLeaks.jobs.DTOs.CreateJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.ResponseJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.UpdateJobDTO;
+import com.fabdev.AlbirLeaks.users.User;
 import com.fabdev.AlbirLeaks.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,39 +30,62 @@ public class JobsController {
     }
 
     @GetMapping("/jobs")
-    public List<Job> getAllJobs (){
+    public List<ResponseJobDTO> getAllJobs() {
         return service.getJobs();
     }
 
+    @GetMapping("/users")
+    public List<User> getAllUsers() {
+        return userService.getUsers();
+    }
+
     @GetMapping("/jobs/{jobId}")
-    public ResponseJobDTO getJob(@PathVariable String jobId){
-        ResponseJobDTO jobToFind = service.getJobById(jobId);
-        return jobToFind;
+    public ResponseJobDTO getJob(@PathVariable String jobId) {
+        return service.getJobById(jobId);
+    }
+
+    @GetMapping(value = "/username")
+    public Object currentUserName(Authentication authentication) {
+        authentication = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("Current Authentication: {}", authentication);
+        return authentication.getPrincipal();
     }
 
     @PostMapping("/jobs")
-    public ResponseEntity<ResponseJobDTO> createNewJob(@RequestBody CreateJobDTO dto){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String googleId = ((OAuth2AuthenticationToken) authentication).getPrincipal().getAttribute("sub");
-        ResponseJobDTO job = service.createJob(dto,googleId);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{jobId}")
-                .buildAndExpand(job.jobId())
-                .toUri();
-        return ResponseEntity.created(location).body(job);
+    public ResponseEntity<ResponseJobDTO> createNewJob(@RequestBody CreateJobDTO dto, Authentication authentication) {
+        logger.info("AUTHENTICATION: {}", authentication);
+
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+            String googleId = oauthToken.getPrincipal().getAttribute("sub");
+            logger.info("Google ID from token: {}", googleId);
+
+            try {
+                ResponseJobDTO job = service.createJob(dto, googleId);
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{jobId}")
+                        .buildAndExpand(job.jobId())
+                        .toUri();
+                return ResponseEntity.created(location).body(job);
+            } catch (Exception e) {
+                logger.error("Failed to create job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
+            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    @PutMapping("/jobs/{jobId}")
-    public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto){
-        ResponseJobDTO updatedJob = service.updateJob(jobId, dto);
-        return ResponseEntity.ok(updatedJob);
-    }
+//    @PutMapping("/jobs/{jobId}")
+//    public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto) {
+//        ResponseJobDTO updatedJob = service.updateJob(jobId, dto);
+//        return ResponseEntity.ok(updatedJob);
+//    }
 
     @DeleteMapping("/jobs/{jobId}")
-    public ResponseEntity<Void> deleteJob(@PathVariable String jobId){
+    public ResponseEntity<Void> deleteJob(@PathVariable String jobId) {
         service.deleteJob(jobId);
         return ResponseEntity.noContent().build();
     }
-
-
 }

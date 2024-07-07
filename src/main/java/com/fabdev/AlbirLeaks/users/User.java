@@ -1,6 +1,7 @@
 package com.fabdev.AlbirLeaks.users;
 
 import com.fabdev.AlbirLeaks.jobs.Job;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ public class User {
     private String email;
     private String role;
     private String googleId;
+    @JsonManagedReference
     private List<Job> jobs;
 
     public User(String userId, String username, String email, String role, String googleId, List<Job> jobs) {
@@ -21,6 +23,7 @@ public class User {
         this.jobs = jobs;
     }
 
+    // Getters and Setters
     public String getUserId() {
         return userId;
     }

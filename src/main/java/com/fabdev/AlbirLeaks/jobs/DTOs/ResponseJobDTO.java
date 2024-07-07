@@ -7,5 +7,7 @@ public record ResponseJobDTO(String jobId,
                              String jobDescription,
                              String location,
                              String companyName,
-                             LocalDate createdAt) {
+                             LocalDate createdAt,
+                             OwnerDTO owner
+) {
 }
