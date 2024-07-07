@@ -1,6 +1,7 @@
 package com.fabdev.AlbirLeaks.jobs;
 
 import com.fabdev.AlbirLeaks.exception.JobNotFoundException;
+import com.fabdev.AlbirLeaks.exception.UnauthorizedException;
 import com.fabdev.AlbirLeaks.jobs.DTOs.CreateJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.OwnerDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.ResponseJobDTO;
@@ -83,14 +84,21 @@ public class JobsService {
         return JobMapper.mapToResponseJobDTO(jobToUpdate);
     }
 
-    public void deleteJob(String jobId){
+
+    public void deleteJob(String jobId, String googleId) {
         Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
         Job jobToDelete = jobs.stream()
                 .filter(predicate)
                 .findFirst()
-                .orElseThrow(()-> new RuntimeException(String.format("Job not found for ID: %s",jobId)));
+                .orElseThrow(() -> new JobNotFoundException(String.format("Job not found for ID: %s", jobId)));
+
+        if (!jobToDelete.getOwner().getGoogleId().equals(googleId)) {
+            throw new UnauthorizedException("You are not authorized to delete this job");
+        }
+
         jobs.remove(jobToDelete);
     }
+
 
 
 

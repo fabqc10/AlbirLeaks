@@ -103,8 +103,26 @@ public class JobsController {
     }
 
     @DeleteMapping("/jobs/{jobId}")
-    public ResponseEntity<Void> deleteJob(@PathVariable String jobId) {
-        service.deleteJob(jobId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteJob(@PathVariable String jobId, Authentication authentication) {
+        logger.info("AUTHENTICATION: {}", authentication);
+
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            String googleId = oauthToken.getPrincipal().getAttribute("sub");
+            logger.info("Google ID from token: {}", googleId);
+
+            try {
+                service.deleteJob(jobId,googleId);
+                return ResponseEntity.noContent().build();
+            } catch (JobNotFoundException e) {
+                logger.error("Job not found: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            } catch (Exception e) {
+                logger.error("Failed to update job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
+            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }
