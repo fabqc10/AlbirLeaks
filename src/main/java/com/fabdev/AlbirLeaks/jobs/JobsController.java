@@ -1,5 +1,6 @@
 package com.fabdev.AlbirLeaks.jobs;
 
+import com.fabdev.AlbirLeaks.exception.JobNotFoundException;
 import com.fabdev.AlbirLeaks.jobs.DTOs.CreateJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.ResponseJobDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.UpdateJobDTO;
@@ -77,11 +78,29 @@ public class JobsController {
         }
     }
 
-//    @PutMapping("/jobs/{jobId}")
-//    public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto) {
-//        ResponseJobDTO updatedJob = service.updateJob(jobId, dto);
-//        return ResponseEntity.ok(updatedJob);
-//    }
+    @PutMapping("/jobs/{jobId}")
+    public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto, Authentication authentication) {
+        logger.info("AUTHENTICATION: {}", authentication);
+
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            String googleId = oauthToken.getPrincipal().getAttribute("sub");
+            logger.info("Google ID from token: {}", googleId);
+
+            try {
+                ResponseJobDTO updatedJob = service.updateJob(jobId, dto);
+                return ResponseEntity.ok(updatedJob);
+            } catch (JobNotFoundException e) {
+                logger.error("Job not found: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            } catch (Exception e) {
+                logger.error("Failed to update job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
+            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 
     @DeleteMapping("/jobs/{jobId}")
     public ResponseEntity<Void> deleteJob(@PathVariable String jobId) {

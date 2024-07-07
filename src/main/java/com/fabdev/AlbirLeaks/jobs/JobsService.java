@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Component
 public class JobsService {
 
-    private UserService userService;
+    private final UserService userService;
     private final ObjectMapper objectMapper;
     private Logger logger = LoggerFactory.getLogger(JobsService.class);
 
@@ -43,23 +43,7 @@ public class JobsService {
         Predicate<Job> jobPredicate = job -> job.getJobId().equals(jobId);
         Job jobToFind = jobs.stream().filter(jobPredicate).findFirst().orElse(null);
         if (jobToFind == null) throw new JobNotFoundException(String.format("Job with id: %s not found",jobId));
-        User owner = jobToFind.getOwner();
-        OwnerDTO ownerDTO = new OwnerDTO(
-                owner.getUserId(),
-                owner.getUsername(),
-                owner.getEmail(),
-                owner.getRole(),
-                owner.getGoogleId());
-
-        return new ResponseJobDTO(
-                jobToFind.getJobId(),
-                jobToFind.getJobTitle(),
-                jobToFind.getJobDescription(),
-                jobToFind.getLocation(),
-                jobToFind.getCompanyName(),
-                jobToFind.getCreatedAt(),
-                ownerDTO
-        );
+        return JobMapper.mapToResponseJobDTO(jobToFind);
     }
 
     public ResponseJobDTO createJob(CreateJobDTO dto, String googleId) {
@@ -80,41 +64,24 @@ public class JobsService {
 
         user.getJobs().add(newJob);
 
-        OwnerDTO ownerDTO = new OwnerDTO(
-                user.getUserId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.getGoogleId());
-
-        return new ResponseJobDTO(
-                newJob.getJobId(),
-                newJob.getJobTitle(),
-                newJob.getJobDescription(),
-                newJob.getLocation(),
-                newJob.getCompanyName(),
-                newJob.getCreatedAt(),
-                ownerDTO
-        );
+        return JobMapper.mapToResponseJobDTO(newJob);
     }
 
 
+    public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto){
+        Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
+        Job jobToUpdate = jobs.stream().filter(predicate).findFirst().orElse(null);
 
-//    public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto){
-//        Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
-//        Job jobToUpdate = jobs.stream().filter(predicate).findFirst().orElse(null);
-//
-//
-//        if (jobToUpdate == null) throw new RuntimeException("Job not found");
-//
-//        jobToUpdate.setJobTitle(dto.jobTitle());
-//        jobToUpdate.setJobDescription(dto.jobDescription());
-//        jobToUpdate.setLocation(dto.location());
-//        jobToUpdate.setCompanyName(dto.companyName());
-//
-//
-//        return new ResponseJobDTO(jobId,jobToUpdate.getJobTitle(),jobToUpdate.getJobDescription(),jobToUpdate.getLocation(),jobToUpdate.getCompanyName(),jobToUpdate.getCreatedAt());
-//    }
+
+        if (jobToUpdate == null) throw new RuntimeException("Job not found");
+
+        jobToUpdate.setJobTitle(dto.jobTitle());
+        jobToUpdate.setJobDescription(dto.jobDescription());
+        jobToUpdate.setLocation(dto.location());
+        jobToUpdate.setCompanyName(dto.companyName());
+
+        return JobMapper.mapToResponseJobDTO(jobToUpdate);
+    }
 
     public void deleteJob(String jobId){
         Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
