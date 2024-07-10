@@ -2,16 +2,20 @@ package com.fabdev.AlbirLeaks.users;
 
 import com.fabdev.AlbirLeaks.jobs.Job;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 
 import java.util.List;
-
+@Entity
+@Table(name = "users")
 public class User {
+    @Id
     private String userId;
     private String username;
     private String email;
     private String role;
     private String googleId;
-    @JsonManagedReference
+    @OneToMany
+    @JoinColumn(name = "owner")
     private List<Job> jobs;
 
     public User(String userId, String username, String email, String role, String googleId, List<Job> jobs) {
@@ -21,6 +25,10 @@ public class User {
         this.role = role;
         this.googleId = googleId;
         this.jobs = jobs;
+    }
+
+    public User() {
+
     }
 
     // Getters and Setters

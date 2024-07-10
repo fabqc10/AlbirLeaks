@@ -2,17 +2,21 @@ package com.fabdev.AlbirLeaks.jobs;
 
 import com.fabdev.AlbirLeaks.users.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
-
+@Entity
+@Table(name = "jobs")
 public class Job {
+    @Id
     private String jobId;
     private String jobTitle;
     private String jobDescription;
     private String location;
     private String companyName;
     private LocalDate createdAt;
-    @JsonBackReference
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     private User owner;
 
 
@@ -23,6 +27,10 @@ public class Job {
         this.location = location;
         this.companyName = companyName;
         this.createdAt = createdAt;
+    }
+
+    public Job() {
+
     }
 
     public String getJobId() {

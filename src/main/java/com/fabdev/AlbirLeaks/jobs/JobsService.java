@@ -98,5 +98,4 @@ public class JobsService {
 
         jobs.remove(jobToDelete);
     }
-
 }
