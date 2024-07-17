@@ -2,6 +2,7 @@ package com.fabdev.AlbirLeaks.jobs;
 
 import com.fabdev.AlbirLeaks.users.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -9,19 +10,20 @@ import java.time.LocalDate;
 @Table(name = "jobs")
 public class Job {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String jobId;
     private String jobTitle;
     private String jobDescription;
     private String location;
     private String companyName;
     private LocalDate createdAt;
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id",nullable = false)
+    @JsonIgnore
     private User owner;
 
 
-    public Job(String jobId, String jobTitle, String jobDescription, String location, String companyName, LocalDate createdAt) {
-        this.jobId = jobId;
+    public Job(String jobTitle, String jobDescription, String location, String companyName, LocalDate createdAt) {
         this.jobTitle = jobTitle;
         this.jobDescription = jobDescription;
         this.location = location;

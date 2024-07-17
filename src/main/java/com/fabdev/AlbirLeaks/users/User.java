@@ -9,17 +9,16 @@ import java.util.List;
 @Table(name = "users")
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
     private String username;
     private String email;
     private String role;
     private String googleId;
-    @OneToMany
-    @JoinColumn(name = "owner")
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Job> jobs;
 
-    public User(String userId, String username, String email, String role, String googleId, List<Job> jobs) {
-        this.userId = userId;
+    public User(String username, String email, String role, String googleId, List<Job> jobs) {
         this.username = username;
         this.email = email;
         this.role = role;
@@ -31,7 +30,6 @@ public class User {
 
     }
 
-    // Getters and Setters
     public String getUserId() {
         return userId;
     }
