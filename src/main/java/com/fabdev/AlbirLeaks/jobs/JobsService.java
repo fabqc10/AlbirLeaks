@@ -34,7 +34,7 @@ public class JobsService {
         this.userService = userService;
     }
 
-    private List<Job> jobs = new ArrayList<>();
+//    private List<Job> jobs = new ArrayList<>();
 
 //    public List<ResponseJobDTO> getJobs(){
 //        return jobs.stream().map(JobMapper::mapToResponseJobDTO).collect(Collectors.toList());
@@ -73,7 +73,7 @@ public class JobsService {
 
         newJob.setOwner(user);
         jobsRepository.save(newJob);
-        jobs.add(newJob);
+//        jobs.add(newJob);
 
         user.getJobs().add(newJob);
 
@@ -83,6 +83,7 @@ public class JobsService {
 
     public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto){
         Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
+        List<Job> jobs = jobsRepository.findAll();
         Job jobToUpdate = jobs.stream().filter(predicate).findFirst().orElse(null);
 
 

@@ -1,7 +1,6 @@
 package com.fabdev.AlbirLeaks.users;
 
 import com.fabdev.AlbirLeaks.jobs.Job;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.List;

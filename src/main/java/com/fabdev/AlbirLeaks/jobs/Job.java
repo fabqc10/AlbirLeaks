@@ -1,7 +1,6 @@
 package com.fabdev.AlbirLeaks.jobs;
 
 import com.fabdev.AlbirLeaks.users.User;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 

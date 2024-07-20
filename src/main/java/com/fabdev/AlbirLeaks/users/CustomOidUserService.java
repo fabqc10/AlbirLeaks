@@ -31,8 +31,6 @@ public class CustomOidUserService extends OidcUserService {
         List<SimpleGrantedAuthority> mappedAuthorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
         logger.info("Assigning roles: {}", mappedAuthorities);
 
-
-
         // Log the ID Token
         String idToken = userRequest.getIdToken().getTokenValue();
         System.out.println("ID Token: " + idToken);
