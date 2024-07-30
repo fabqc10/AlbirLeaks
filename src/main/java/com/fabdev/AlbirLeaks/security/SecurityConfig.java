@@ -25,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -48,7 +49,7 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET, "/jobs").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/jobs").permitAll()
                         .requestMatchers(HttpMethod.GET, "/username").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/jobs").hasRole("USER")
                         .requestMatchers("/").permitAll()
@@ -92,10 +93,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("*"); // Allow all origins, you can restrict this to specific origins
-        configuration.addAllowedMethod("*"); // Allow all methods (GET, POST, etc.), you can restrict this to specific methods
-        configuration.addAllowedHeader("*"); // Allow all headers, you can restrict this to specific headers
-        configuration.setAllowCredentials(true); // Allow credentials (cookies, authorization headers, etc.)
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Allow your frontend's origin
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
