@@ -52,6 +52,18 @@ public class JobsService {
 //        return JobMapper.mapToResponseJobDTO(jobToFind);
 //    }
 
+    public List<ResponseJobDTO> getJobsByUser(String googleId){
+        User user = userService
+                .findByGoogleId(googleId)
+                .orElseThrow(()->new RuntimeException("User not found"));
+
+        List<Job> jobs = jobsRepository.findByOwnerGoogleId(googleId);
+
+        return jobs.stream()
+                .map(JobMapper::mapToResponseJobDTO)
+                .collect(Collectors.toList());
+    }
+
     public ResponseJobDTO getJobById(String jobId) {
         Job jobToFind = jobsRepository.findById(jobId)
                 .orElseThrow(() -> new JobNotFoundException(String.format("Job with id: %s not found", jobId)));
@@ -80,7 +92,7 @@ public class JobsService {
         return JobMapper.mapToResponseJobDTO(newJob);
     }
 
-
+    @Transactional
     public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto){
         Predicate<? super Job> predicate = job -> job.getJobId().equals(jobId);
         List<Job> jobs = jobsRepository.findAll();
@@ -113,6 +125,8 @@ public class JobsService {
 //
 //        jobs.remove(jobToDelete);
 //    }
+
+    @Transactional
     public void deleteJob(String jobId, String googleId) {
         Job jobToDelete = jobsRepository.findById(jobId)
                 .orElseThrow(()->new JobNotFoundException(String.format("Job not found for ID: %s", jobId)));

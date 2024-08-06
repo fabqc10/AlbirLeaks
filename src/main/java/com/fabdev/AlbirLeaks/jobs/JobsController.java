@@ -45,6 +45,13 @@ public class JobsController {
         return service.getJobById(jobId);
     }
 
+    @GetMapping("/jobs/user/{googleId}")
+    public ResponseEntity<List<ResponseJobDTO>> getJobsByOwner(@PathVariable String googleId){
+        List<ResponseJobDTO> jobs = service.getJobsByUser(googleId);
+        return ResponseEntity.ok(jobs);
+    }
+
+
     @GetMapping(value = "/username")
     public Object currentUserName(Authentication authentication) {
         authentication = SecurityContextHolder.getContext().getAuthentication();
