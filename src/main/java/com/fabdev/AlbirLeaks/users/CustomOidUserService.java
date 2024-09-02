@@ -16,11 +16,11 @@ import java.util.List;
 
 @Service
 public class CustomOidUserService extends OidcUserService {
-    private final UserService userService;
+    private final UserManagementService userManagementService;
     private final Logger logger = LoggerFactory.getLogger(JobsController.class);
 
-    public CustomOidUserService(UserService userService) {
-        this.userService = userService;
+    public CustomOidUserService(UserManagementService userManagementService) {
+        this.userManagementService = userManagementService;
     }
 
     @Override
@@ -30,6 +30,8 @@ public class CustomOidUserService extends OidcUserService {
 
         List<SimpleGrantedAuthority> mappedAuthorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
         logger.info("Assigning roles: {}", mappedAuthorities);
+
+
 
         // Log the ID Token
         String idToken = userRequest.getIdToken().getTokenValue();
@@ -45,13 +47,12 @@ public class CustomOidUserService extends OidcUserService {
         String username = oidcUser.getGivenName();
 
         // Find or create the user in the local database
-        User user = userService
-                .findByGoogleId(googleId)
-                .orElseGet(() -> userService.createUser(googleId, email, username));
+        User existingUser = userManagementService.findOrCreateUser(googleId, email, username);
+
 
         // Additional log to confirm user creation logic
         System.out.println("User with Google ID " + googleId + " is created or already exists.");
-        System.out.println("User Roles: " + user.getRole());
+        System.out.println("User Roles: " + existingUser.getRole());
 
         // Return the loaded OIDC user
         return new DefaultOidcUser(mappedAuthorities, oidcUser.getIdToken(), oidcUser.getUserInfo());

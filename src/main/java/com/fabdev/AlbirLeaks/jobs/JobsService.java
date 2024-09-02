@@ -53,9 +53,10 @@ public class JobsService {
 //    }
 
     public List<ResponseJobDTO> getJobsByUser(String googleId){
+        System.out.println("in funtion getJobsByUserssssss");
         User user = userService
                 .findByGoogleId(googleId)
-                .orElseThrow(()->new RuntimeException("User not found"));
+                .orElseThrow(()->new RuntimeException("User not found in gjbID"));
 
         List<Job> jobs = jobsRepository.findByOwnerGoogleId(googleId);
 

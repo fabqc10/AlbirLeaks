@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -65,7 +66,8 @@ public class JobsController {
 
         if (authentication instanceof OAuth2AuthenticationToken) {
             OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-            String googleId = oauthToken.getPrincipal().getAttribute("sub");
+            logger.info("OAuthToken: {}", oauthToken.getPrincipal());
+            String googleId = oauthToken.getPrincipal().getAttribute("sub"); // Assuming 'sub' is the Google ID
             logger.info("Google ID from token: {}", googleId);
 
             try {
@@ -79,11 +81,30 @@ public class JobsController {
                 logger.error("Failed to create job: {}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+
+        } else if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
+            String googleId = jwtToken.getToken().getClaimAsString("sub"); // Assuming 'sub' is the Google ID
+            logger.info("Google ID from JWT token: {}", googleId);
+
+            try {
+                ResponseJobDTO job = service.createJob(dto, googleId);
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{jobId}")
+                        .buildAndExpand(job.jobId())
+                        .toUri();
+                return ResponseEntity.created(location).body(job);
+            } catch (Exception e) {
+                logger.error("Failed to create job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
         } else {
-            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
+            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken or JwtAuthenticationToken");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
 
     @PutMapping("/jobs/{jobId}")
     public ResponseEntity<ResponseJobDTO> updateJob(@PathVariable String jobId, @RequestBody UpdateJobDTO dto, Authentication authentication) {
@@ -103,10 +124,26 @@ public class JobsController {
                 logger.error("Failed to update job: {}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+        } else if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) authentication;
+            String googleId = jwtAuthenticationToken.getToken().getClaimAsString("sub");
+            logger.info("Google ID from JWT token: {}", googleId);
+            try {
+                ResponseJobDTO updatedJob = service.updateJob(jobId,dto);
+                return ResponseEntity.ok(updatedJob);
+            }catch (JobNotFoundException e) {
+                logger.error("Job not found: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            } catch (Exception e) {
+                logger.error("Failed to update job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
         } else {
             logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
     }
 
     @DeleteMapping("/jobs/{jobId}")
@@ -124,12 +161,26 @@ public class JobsController {
                 logger.error("Job not found: {}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             } catch (Exception e) {
-                logger.error("Failed to update job: {}", e.getMessage(), e);
+                logger.error("Failed to delete job: {}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+        } else if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
+            String googleId = jwtToken.getToken().getClaimAsString("sub"); // Assuming 'sub' is the Google ID
+            logger.info("Google ID from JWT token: {}", googleId);
+
+            try {
+                service.deleteJob(jobId, googleId);
+                return ResponseEntity.noContent().build();
+            } catch (Exception e) {
+                logger.error("Failed to delete job: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
         } else {
-            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken");
+            logger.warn("Authentication is not an instance of OAuth2AuthenticationToken or JwtAuthenticationToken");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
     }
 }
