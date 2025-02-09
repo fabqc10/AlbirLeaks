@@ -111,6 +111,21 @@ public class JobsService {
 
         return JobMapper.mapToResponseJobDTO(jobToUpdate);
     }
+//    @Transactional
+//    public ResponseJobDTO updateJob(String jobId, UpdateJobDTO dto) {
+//        Job jobToUpdate = jobsRepository.findById(jobId)
+//                .orElseThrow(() -> new JobNotFoundException("Job not found"));
+//
+//        jobToUpdate.setJobTitle(dto.jobTitle());
+//        jobToUpdate.setJobDescription(dto.jobDescription());
+//        jobToUpdate.setLocation(dto.location());
+//        jobToUpdate.setCompanyName(dto.companyName());
+//
+//        jobsRepository.save(jobToUpdate);
+//
+//        return JobMapper.mapToResponseJobDTO(jobToUpdate);
+//    }
+
 
 
 //    public void deleteJob(String jobId, String googleId) {
