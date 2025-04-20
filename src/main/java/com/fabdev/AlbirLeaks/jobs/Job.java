@@ -12,6 +12,7 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String jobId;
     private String jobTitle;
+    @Column(length = 5000)
     private String jobDescription;
     private String location;
     private String companyName;
