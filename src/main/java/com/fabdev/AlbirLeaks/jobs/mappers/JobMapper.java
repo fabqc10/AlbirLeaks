@@ -1,6 +1,6 @@
 package com.fabdev.AlbirLeaks.jobs.mappers;
 
-import com.fabdev.AlbirLeaks.jobs.DTOs.CreateJobDTO;
+import com.fabdev.AlbirLeaks.jobs.DTOs.JobSummaryDto;
 import com.fabdev.AlbirLeaks.jobs.DTOs.OwnerDTO;
 import com.fabdev.AlbirLeaks.jobs.DTOs.ResponseJobDTO;
 import com.fabdev.AlbirLeaks.jobs.Job;
@@ -28,6 +28,12 @@ public class JobMapper {
                 job.getCreatedAt(),
                 ownerDTO
         );
+    }
+
+    public static JobSummaryDto toJobSummaryDto(Job job) {
+        if (job == null) return null;
+        // Asegúrate que Job tiene getJobId() y getJobTitle() y que getJobId() devuelve el tipo correcto (String/Long)
+        return new JobSummaryDto(job.getJobId(), job.getJobTitle());
     }
 
 }

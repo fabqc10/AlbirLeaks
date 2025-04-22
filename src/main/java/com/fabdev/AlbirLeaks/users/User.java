@@ -2,8 +2,16 @@ package com.fabdev.AlbirLeaks.users;
 
 import com.fabdev.AlbirLeaks.jobs.Job;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
+@Getter // Genera todos los getters
+@Setter // Genera todos los setters
+@NoArgsConstructor // Genera el constructor sin argumentos (requerido por JPA)
+@AllArgsConstructor // Genera un constructor con todos los argumentos (opcional, pero útil)
 @Entity
 @Table(name = "users")
 public class User {
@@ -25,9 +33,6 @@ public class User {
         this.jobs = jobs;
     }
 
-    public User() {
-
-    }
 
     public String getUserId() {
         return userId;
