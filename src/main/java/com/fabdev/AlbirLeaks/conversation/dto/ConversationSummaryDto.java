@@ -10,6 +10,7 @@ import java.util.List;
 // DTO para listar las conversaciones de un usuario
 public record ConversationSummaryDto(
         Long id, // ID de la conversación
+        JobOwnerInfoDto jobOwnerInfo, // Información del propietario del Job
         JobSummaryDto job, // Info del anuncio relacionado
         List<UserSummaryDto> participants, // Los usuarios en el chat (excluyendo al propio usuario, opcionalmente)
         MessageDto lastMessage, // El último mensaje enviado (para preview)

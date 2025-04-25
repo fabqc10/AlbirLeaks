@@ -33,7 +33,7 @@ public class JobMapper {
     public static JobSummaryDto toJobSummaryDto(Job job) {
         if (job == null) return null;
         // Asegúrate que Job tiene getJobId() y getJobTitle() y que getJobId() devuelve el tipo correcto (String/Long)
-        return new JobSummaryDto(job.getJobId(), job.getJobTitle());
+        return new JobSummaryDto(job.getJobId(), job.getJobTitle(), job.getCompanyName());
     }
 
 }
