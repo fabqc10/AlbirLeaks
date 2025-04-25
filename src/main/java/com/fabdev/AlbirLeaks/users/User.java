@@ -22,15 +22,18 @@ public class User {
     private String email;
     private String role;
     private String googleId;
+
+    private String imageUrl;
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Job> jobs;
 
-    public User(String username, String email, String role, String googleId, List<Job> jobs) {
+    public User(String username, String email, String role, String googleId, List<Job> jobs, String imageUrl) {
         this.username = username;
         this.email = email;
         this.role = role;
         this.googleId = googleId;
         this.jobs = jobs;
+        this.imageUrl = imageUrl;
     }
 
 
@@ -80,5 +83,12 @@ public class User {
 
     public void setJobs(List<Job> jobs) {
         this.jobs = jobs;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

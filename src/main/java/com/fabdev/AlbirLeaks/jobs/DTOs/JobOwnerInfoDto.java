@@ -6,6 +6,8 @@ public class JobOwnerInfoDto {
     private String userId; // UUID del propietario
     private String username; // Username del propietario
 
+    private String imageUrl;
+
     // Constructor vacío (puede ser útil)
     public JobOwnerInfoDto() {
     }
@@ -25,6 +27,14 @@ public class JobOwnerInfoDto {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
 

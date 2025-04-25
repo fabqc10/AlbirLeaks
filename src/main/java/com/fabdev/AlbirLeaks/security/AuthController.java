@@ -33,10 +33,11 @@ public class AuthController {
         String googleId = decodedJwt.getClaimAsString("sub");
         String email = decodedJwt.getClaimAsString("email");
         String username = decodedJwt.getClaimAsString("name");
+        String imageUrl = decodedJwt.getClaimAsString("picture");
 
         // Check if user exists in the database, if not create a new user
         // Example: userService.findOrCreateUser(userId, email, name);
-        User existingUser = userManagementService.findOrCreateUser(googleId, email, username);
+        User existingUser = userManagementService.findOrCreateUser(googleId, email, username,imageUrl);
 
 
         return ResponseEntity.ok("User authenticated successfully AND TOKEN FROM FRONTEND TO BACK: " + token);

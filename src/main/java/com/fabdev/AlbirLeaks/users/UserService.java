@@ -30,9 +30,9 @@ public class UserService {
 //        System.out.println("USER CREATED");
 //        return newUser;
 //    }
-public User createUser(String googleId, String email, String username) {
+public User createUser(String googleId, String email, String username, String imageUrl) {
     // Ensure the role matches the expected format in your security config
-    User newUser = new User(username, email,"USER", googleId, new ArrayList<>());
+    User newUser = new User(username, email,"USER", googleId, new ArrayList<>(),imageUrl);
     System.out.println("USER CREATED");
     return userRepository.save(newUser);
 }

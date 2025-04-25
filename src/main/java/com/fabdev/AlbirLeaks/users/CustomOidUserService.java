@@ -45,9 +45,10 @@ public class CustomOidUserService extends OidcUserService {
         String googleId = oidcUser.getSubject();
         String email = oidcUser.getEmail();
         String username = oidcUser.getGivenName();
+        String picture = oidcUser.getPicture();
 
         // Find or create the user in the local database
-        User existingUser = userManagementService.findOrCreateUser(googleId, email, username);
+        User existingUser = userManagementService.findOrCreateUser(googleId, email, username,picture);
 
 
         // Additional log to confirm user creation logic

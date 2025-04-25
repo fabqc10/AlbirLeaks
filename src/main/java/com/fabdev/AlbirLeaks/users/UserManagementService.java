@@ -10,8 +10,8 @@ public class UserManagementService {
         this.userService = userService;
     }
 
-    public synchronized User findOrCreateUser(String googleId, String email, String username) {
+    public synchronized User findOrCreateUser(String googleId, String email, String username, String imageUrl) {
         return userService.findByGoogleId(googleId)
-                .orElseGet(() -> userService.createUser(googleId, email, username));
+                .orElseGet(() -> userService.createUser(googleId, email, username,imageUrl));
     }
 }

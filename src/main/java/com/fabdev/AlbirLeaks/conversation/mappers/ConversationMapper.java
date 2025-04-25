@@ -38,6 +38,7 @@ public class ConversationMapper {
                 ownerInfo = new JobOwnerInfoDto();
                 ownerInfo.setUserId(owner.getUserId());
                 ownerInfo.setUsername(owner.getUsername());
+                ownerInfo.setImageUrl(owner.getImageUrl());
             }
         }
 
