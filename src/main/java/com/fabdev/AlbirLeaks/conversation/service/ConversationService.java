@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,10 +36,22 @@ public class ConversationService {
     public List<ConversationSummaryDto> getUserConversations(String googleId) {
         log.debug("Fetching conversations for googleId: {}", googleId);
         User user = findUserByGoogleIdOrThrow(googleId);
+        // Asegurarse de obtener el userId (UUID) del usuario actual
+        String currentUserId = user.getUserId(); 
+        if (currentUserId == null) {
+             log.error("Current user (googleId: {}) has a null userId! Cannot calculate unread counts.", googleId);
+             // Podrías lanzar una excepción o retornar un DTO con error
+             // Por ahora, continuamos, pero el count será 0
+             currentUserId = ""; // Evita NullPointerException, pero el count será 0
+        }
+
         List<Conversation> conversations = conversationRepository.findByParticipantsContainingOrderByLastUpdatedAtDesc(user);
         log.info("Found {} conversations for googleId {}", conversations.size(), googleId);
+
+        // Pasar el currentUserId (UUID String) al mapper
+        String finalCurrentUserId = currentUserId; // Necesario para lambda
         return conversations.stream()
-                .map(ConversationMapper::toConversationSummaryDto)
+                .map(conv -> ConversationMapper.toConversationSummaryDto(conv, finalCurrentUserId))
                 .collect(Collectors.toList());
     }
 
@@ -61,27 +72,28 @@ public class ConversationService {
             throw new IllegalStateException("Job owner not found for job: " + jobId);
         }
 
-        // Asumiendo que User tiene un método getUserId() que devuelve el googleId (String)
-        String requesterId = requester.getUserId();
+        // Usar los userId (UUID String)
+        String requesterId = requester.getUserId(); 
         String ownerId = jobOwner.getUserId();
 
         if (requesterId.equals(ownerId)) {
-            log.warn("User (googleId: {}) attempted to create conversation with themselves for job ID: {}", requesterGoogleId, jobId);
+            log.warn("User (userId: {}) attempted to create conversation with themselves for job ID: {}", requesterId, jobId);
             throw new IllegalArgumentException("Cannot start a conversation with yourself for your own job.");
         }
 
-        // Usar el String jobId directamente, y los String userIds (googleId)
-        // La llamada ahora coincide con la firma del repositorio (String, String, String)
+        // Usar el String jobId y los String userIds (UUID)
         Conversation conversation = conversationRepository
-                .findByJobIdAndParticipants(jobId, requesterId, ownerId)
+                // Intenta buscar en ambos órdenes de participantes
+                .findByJobIdAndParticipants(jobId, requesterId, ownerId) 
                 .or(() -> conversationRepository.findByJobIdAndParticipants(jobId, ownerId, requesterId))
                 .orElseGet(() -> {
                     log.info("No existing conversation found for job {}, creating new one between users {} and {}", jobId, requesterId, ownerId);
                     return createNewConversation(job, requester, jobOwner);
                  });
 
-        log.info("Returning conversation ID: {} for job {} (requesterGoogleId: {})", conversation.getId(), jobId, requesterGoogleId);
-        return ConversationMapper.toConversationSummaryDto(conversation);
+        log.info("Returning conversation ID: {} for job {} (requesterId: {})", conversation.getId(), jobId, requesterId);
+        // Pasar el requesterId (UUID) al mapper para que pueda calcular el count inicial (aunque aquí no será muy útil)
+        return ConversationMapper.toConversationSummaryDto(conversation, requesterId);
     }
 
     private Conversation createNewConversation(Job job, User user1, User user2) {
@@ -103,16 +115,15 @@ public class ConversationService {
         conversation.setLastUpdatedAt(LocalDateTime.now());
     }
 
-    // Busca una conversación asegurándose de que el usuario (por googleId) tiene permiso
-    // *** CORRECCIÓN AQUÍ ***
+    // Busca una conversación asegurándose de que el usuario (por su userId UUID String) tiene permiso
     @Transactional(readOnly = true)
-    public Conversation findConversationByIdAndUserOrThrow(Long conversationId, String googleId) {
-        log.debug("Checking access for googleId {} to conversationId {}", googleId, conversationId);
-        // Llama directamente al método del repositorio que espera (Long, String)
-        return conversationRepository.findByIdAndParticipantId(conversationId, googleId)
+    public Conversation findConversationByIdAndUserOrThrow(Long conversationId, String userId) { // Ahora recibe userId (UUID String)
+        log.debug("Checking access for userId {} to conversationId {}", userId, conversationId);
+        // Llama al método corregido del repositorio
+        return conversationRepository.findByIdAndParticipantId(conversationId, userId) 
                 .orElseThrow(() -> {
-                    log.warn("Unauthorized access attempt by googleId {} to conversationId {}", googleId, conversationId);
-                    return new UnauthorizedException("User " + googleId + " not authorized for conversation " + conversationId);
+                    log.warn("Unauthorized access attempt by userId {} to conversationId {}", userId, conversationId);
+                    return new UnauthorizedException("User " + userId + " not authorized for conversation " + conversationId);
                 });
     }
 
@@ -122,7 +133,7 @@ public class ConversationService {
         return userService.findByGoogleId(googleId)
                 .orElseThrow(() -> {
                     log.warn("User not found for googleId: {}", googleId);
-                    return new RuntimeException("User not found with id: " + googleId); // Podría ser mejor UserNotFoundException
+                    return new RuntimeException("User not found with googleId: " + googleId); // Mensaje más claro
                 });
     }
 }

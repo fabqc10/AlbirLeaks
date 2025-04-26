@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 
 public class ConversationMapper {
 
-    public static ConversationSummaryDto toConversationSummaryDto(Conversation conversation) {
+    // Acepta el ID del usuario actual (UUID String) como parámetro
+    public static ConversationSummaryDto toConversationSummaryDto(Conversation conversation, String currentUserId) {
         if (conversation == null) return null;
 
         List<Message> messages = conversation.getMessages();
@@ -42,7 +43,10 @@ public class ConversationMapper {
             }
         }
 
-        int unreadCount = 0;
+        // --- Cálculo Aproximado de UnreadCount ---
+        // NOTA: Esto cuenta los mensajes RECIBIDOS, no los NO LEÍDOS.
+        // Requiere implementar estado de lectura (lastReadTimestamp) para ser preciso.
+        int unreadCount = calculateApproxUnreadCount(conversation, currentUserId);
 
         return new ConversationSummaryDto(
                 conversation.getId(),
@@ -53,7 +57,20 @@ public class ConversationMapper {
                         .collect(Collectors.toList()),
                 MessageMapper.toMessageDto(lastMessage),
                 conversation.getLastUpdatedAt(),
-                unreadCount
+                unreadCount // Pasar el valor calculado
         );
+    }
+
+    // Calcula cuántos mensajes en la conversación NO fueron enviados por el usuario actual.
+    private static int calculateApproxUnreadCount(Conversation conversation, String currentUserId) {
+        if (conversation.getMessages() == null || conversation.getMessages().isEmpty() || currentUserId == null) {
+            return 0;
+        }
+
+        long count = conversation.getMessages().stream()
+                .filter(message -> message.getSender() != null && !currentUserId.equals(message.getSender().getUserId()))
+                .count();
+        
+        return (int) count;
     }
 }
