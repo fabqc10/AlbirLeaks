@@ -23,6 +23,10 @@ public class UserService {
         return userRepository.findByGoogleId(googleId);
     }
 
+    public Optional<User> findByUserId(String userId) {
+        return userRepository.findByUserId(userId);
+    }
+
 //    public User createUser(String googleId, String email, String username) {
 //        // Ensure the role matches the expected format in your security config
 //        User newUser = new User(username, email,"USER", googleId, new ArrayList<>());

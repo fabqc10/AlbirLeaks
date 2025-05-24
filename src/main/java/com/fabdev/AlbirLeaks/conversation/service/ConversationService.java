@@ -4,12 +4,14 @@ import com.fabdev.AlbirLeaks.conversation.Conversation;
 import com.fabdev.AlbirLeaks.conversation.dto.ConversationSummaryDto;
 import com.fabdev.AlbirLeaks.conversation.mappers.ConversationMapper;
 import com.fabdev.AlbirLeaks.conversation.repository.ConversationRepository;
-import com.fabdev.AlbirLeaks.exception.JobNotFoundException; // Necesitas crear esta clase
-import com.fabdev.AlbirLeaks.exception.UnauthorizedException; // Necesitas crear esta clase
-import com.fabdev.AlbirLeaks.jobs.Job; // Verifica importación
+import com.fabdev.AlbirLeaks.conversation.repository.UserConversationMetadataRepository;
+import com.fabdev.AlbirLeaks.conversation.model.UserConversationMetadata;
+import com.fabdev.AlbirLeaks.exception.JobNotFoundException;
+import com.fabdev.AlbirLeaks.exception.UnauthorizedException;
+import com.fabdev.AlbirLeaks.jobs.Job;
 import com.fabdev.AlbirLeaks.jobs.JobsRepository;
-import com.fabdev.AlbirLeaks.users.User; // Verifica importación
-import com.fabdev.AlbirLeaks.users.UserService; // Verifica importación y nombre de tu servicio
+import com.fabdev.AlbirLeaks.users.User;
+import com.fabdev.AlbirLeaks.users.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,34 +30,35 @@ public class ConversationService {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
     private final ConversationRepository conversationRepository;
-    private final UserService userService; // Debe tener findByGoogleId(String) -> Optional<User>
-    private final JobsRepository jobsRepository; // Debe tener findById(String) -> Optional<Job>
+    private final UserService userService;
+    private final JobsRepository jobsRepository;
+    private final UserConversationMetadataRepository userConversationMetadataRepository;
 
-    // Obtiene todas las conversaciones de un usuario (identificado por su googleId)
     @Transactional(readOnly = true)
     public List<ConversationSummaryDto> getUserConversations(String googleId) {
         log.debug("Fetching conversations for googleId: {}", googleId);
         User user = findUserByGoogleIdOrThrow(googleId);
-        // Asegurarse de obtener el userId (UUID) del usuario actual
-        String currentUserId = user.getUserId(); 
+        String currentUserId = user.getUserId();
         if (currentUserId == null) {
              log.error("Current user (googleId: {}) has a null userId! Cannot calculate unread counts.", googleId);
-             // Podrías lanzar una excepción o retornar un DTO con error
-             // Por ahora, continuamos, pero el count será 0
-             currentUserId = ""; // Evita NullPointerException, pero el count será 0
+             currentUserId = "";
         }
 
         List<Conversation> conversations = conversationRepository.findByParticipantsContainingOrderByLastUpdatedAtDesc(user);
         log.info("Found {} conversations for googleId {}", conversations.size(), googleId);
 
-        // Pasar el currentUserId (UUID String) al mapper
-        String finalCurrentUserId = currentUserId; // Necesario para lambda
+        String finalCurrentUserId = currentUserId;
         return conversations.stream()
-                .map(conv -> ConversationMapper.toConversationSummaryDto(conv, finalCurrentUserId))
+                .map(conv -> {
+                    LocalDateTime lastRead = userConversationMetadataRepository
+                        .findByUser_UserIdAndConversation_Id(finalCurrentUserId, conv.getId())
+                        .map(UserConversationMetadata::getLastReadTimestamp)
+                        .orElse(LocalDateTime.MIN);
+                    return ConversationMapper.toConversationSummaryDto(conv, finalCurrentUserId, lastRead);
+                })
                 .collect(Collectors.toList());
     }
 
-    // Inicia una conversación nueva o devuelve la existente (usuarios por googleId, job por jobId String)
     @Transactional
     public ConversationSummaryDto getOrCreateConversationForJob(String jobId, String requesterGoogleId) {
         log.debug("getOrCreateConversationForJob called for jobId: {} and requesterGoogleId: {}", jobId, requesterGoogleId);
@@ -72,8 +75,7 @@ public class ConversationService {
             throw new IllegalStateException("Job owner not found for job: " + jobId);
         }
 
-        // Usar los userId (UUID String)
-        String requesterId = requester.getUserId(); 
+        String requesterId = requester.getUserId();
         String ownerId = jobOwner.getUserId();
 
         if (requesterId.equals(ownerId)) {
@@ -81,10 +83,8 @@ public class ConversationService {
             throw new IllegalArgumentException("Cannot start a conversation with yourself for your own job.");
         }
 
-        // Usar el String jobId y los String userIds (UUID)
         Conversation conversation = conversationRepository
-                // Intenta buscar en ambos órdenes de participantes
-                .findByJobIdAndParticipants(jobId, requesterId, ownerId) 
+                .findByJobIdAndParticipants(jobId, requesterId, ownerId)
                 .or(() -> conversationRepository.findByJobIdAndParticipants(jobId, ownerId, requesterId))
                 .orElseGet(() -> {
                     log.info("No existing conversation found for job {}, creating new one between users {} and {}", jobId, requesterId, ownerId);
@@ -92,8 +92,8 @@ public class ConversationService {
                  });
 
         log.info("Returning conversation ID: {} for job {} (requesterId: {})", conversation.getId(), jobId, requesterId);
-        // Pasar el requesterId (UUID) al mapper para que pueda calcular el count inicial (aunque aquí no será muy útil)
-        return ConversationMapper.toConversationSummaryDto(conversation, requesterId);
+        markConversationAsRead(conversation.getId(), requesterId);
+        return ConversationMapper.toConversationSummaryDto(conversation, requesterId, LocalDateTime.now());
     }
 
     private Conversation createNewConversation(Job job, User user1, User user2) {
@@ -115,25 +115,44 @@ public class ConversationService {
         conversation.setLastUpdatedAt(LocalDateTime.now());
     }
 
-    // Busca una conversación asegurándose de que el usuario (por su userId UUID String) tiene permiso
+    @Transactional
+    public void markConversationAsRead(Long conversationId, String userId) {
+        log.debug("Marking conversation {} as read for user {}", conversationId, userId);
+        User user = userService.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found: " + conversationId));
+
+        UserConversationMetadata metadata = userConversationMetadataRepository
+                .findByUser_UserIdAndConversation_Id(userId, conversationId)
+                .orElseGet(() -> {
+                    UserConversationMetadata newMetadata = new UserConversationMetadata();
+                    newMetadata.setUser(user);
+                    newMetadata.setConversation(conversation);
+                    return newMetadata;
+                });
+
+        metadata.setLastReadTimestamp(LocalDateTime.now());
+        userConversationMetadataRepository.save(metadata);
+        log.info("Conversation {} marked as read for user {} at {}", conversationId, userId, metadata.getLastReadTimestamp());
+    }
+
     @Transactional(readOnly = true)
-    public Conversation findConversationByIdAndUserOrThrow(Long conversationId, String userId) { // Ahora recibe userId (UUID String)
+    public Conversation findConversationByIdAndUserOrThrow(Long conversationId, String userId) {
         log.debug("Checking access for userId {} to conversationId {}", userId, conversationId);
-        // Llama al método corregido del repositorio
-        return conversationRepository.findByIdAndParticipantId(conversationId, userId) 
+        return conversationRepository.findByIdAndParticipantId(conversationId, userId)
                 .orElseThrow(() -> {
                     log.warn("Unauthorized access attempt by userId {} to conversationId {}", userId, conversationId);
                     return new UnauthorizedException("User " + userId + " not authorized for conversation " + conversationId);
                 });
     }
 
-    // Método helper para buscar usuario por googleId (String) y lanzar excepción si no se encuentra
     private User findUserByGoogleIdOrThrow(String googleId) {
         log.trace("Finding user by googleId: {}", googleId);
         return userService.findByGoogleId(googleId)
                 .orElseThrow(() -> {
                     log.warn("User not found for googleId: {}", googleId);
-                    return new RuntimeException("User not found with googleId: " + googleId); // Mensaje más claro
+                    return new RuntimeException("User not found with googleId: " + googleId);
                 });
     }
 }
