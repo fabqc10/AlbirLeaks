@@ -7,13 +7,13 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "messages")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "messages")
 public class Message {
 
     @Id
@@ -21,27 +21,28 @@ public class Message {
     private Long id;
 
     // Relación con la conversación
-    @ManyToOne(fetch = FetchType.LAZY, optional = false) // Un mensaje DEBE pertenecer a una conversación
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false) // Clave foránea
     private Conversation conversation;
 
     // Quién envió el mensaje
-    @ManyToOne(fetch = FetchType.LAZY, optional = false) // Un mensaje DEBE tener un remitente
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false) // Clave foránea
     private User sender;
 
     // Contenido del mensaje
-    @Lob // Para textos largos
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     // Cuándo se envió
-    @Column(nullable = false)
     private LocalDateTime timestamp;
+
+    // Campo para compatibilidad con unreadCount aproximado anterior si se quiere mantener
+    // private boolean read;
 
     // Establecer timestamp al crear
     @PrePersist
-    protected void onSend() {
+    protected void onCreate() {
         timestamp = LocalDateTime.now();
     }
 }

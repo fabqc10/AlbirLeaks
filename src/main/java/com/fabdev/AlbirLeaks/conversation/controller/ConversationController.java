@@ -7,6 +7,7 @@ import com.fabdev.AlbirLeaks.exception.UnauthorizedException;
 import com.fabdev.AlbirLeaks.message.dto.MessageDto;
 import com.fabdev.AlbirLeaks.message.dto.SendMessageRequestDto;
 import com.fabdev.AlbirLeaks.message.service.MessageService;
+import com.fabdev.AlbirLeaks.users.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,7 +34,7 @@ public class ConversationController {
     private static final Logger log = LoggerFactory.getLogger(ConversationController.class);
     private final ConversationService conversationService;
     private final MessageService messageService;
-    // Ya no se necesita UserService aquí
+    private final UserService userService;
 
     // Helper para extraer googleId (claim 'sub') de diferentes tipos de Authentication
     private Optional<String> extractGoogleId(Authentication authentication) {
@@ -144,7 +145,16 @@ public class ConversationController {
         log.debug("Authenticated google ID: {}", googleId);
 
         try {
-            // Llamar al servicio con googleId (String)
+            // Primero, obtenemos el userId (UUID) a partir del googleId
+            // Esto asume que tienes una forma de obtener el User completo o al menos su userId desde el googleId.
+            // Si userService.findByGoogleId(googleId) devuelve Optional<User>, entonces:
+            String userId = userService.findByGoogleId(googleId) // Necesitarás inyectar UserService si no está ya
+                                   .map(com.fabdev.AlbirLeaks.users.User::getUserId)
+                                   .orElseThrow(() -> new RuntimeException("User not found for Google ID: " + googleId));
+
+            // Marcar la conversación como leída ANTES de obtener los mensajes
+            conversationService.markConversationAsRead(conversationId, userId);
+
             Page<MessageDto> messages = messageService.getMessagesForConversation(conversationId, googleId, pageable);
             log.info("Returning page {} of {} messages for conversation {}", messages.getNumber(), messages.getNumberOfElements(), conversationId);
             return ResponseEntity.ok(messages);

@@ -1,6 +1,7 @@
 package com.fabdev.AlbirLeaks.users;
 
 import com.fabdev.AlbirLeaks.jobs.Job;
+import com.fabdev.AlbirLeaks.conversation.model.UserConversationMetadata;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,6 +27,9 @@ public class User {
     private String imageUrl;
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Job> jobs;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserConversationMetadata> conversationMetadata;
 
     public User(String username, String email, String role, String googleId, List<Job> jobs, String imageUrl) {
         this.username = username;
@@ -90,5 +94,13 @@ public class User {
     }
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public List<UserConversationMetadata> getConversationMetadata() {
+        return conversationMetadata;
+    }
+
+    public void setConversationMetadata(List<UserConversationMetadata> conversationMetadata) {
+        this.conversationMetadata = conversationMetadata;
     }
 }
